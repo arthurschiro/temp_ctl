@@ -18,9 +18,9 @@
 #define SETPOINT_GROWTH .1
 #define SETPOINT_DECAY .1
 
-#define CONT_HYST 4000
-#define MIN_T 50000
-#define MAX_T 100000
+#define CONT_HYST 2500
+#define MIN_T 60000
+#define MAX_T 90000
 #define CONVERSION_SLOPE ((MAX_T-MIN_T)/AREF)
 
 unsigned long temp_setpoint=0;
@@ -55,7 +55,7 @@ void loop() {
 #define NUM_ACTIONS 3
 #define STATE_CHANGE_PERIOD 100
 #define READ_VALUES_PERIOD 10
-#define SAFTEY_TIMER_PERIOD 300000
+#define SAFTEY_TIMER_PERIOD 600000
 #define ACTION_TIMER_PERIOD 10
 #define TRANSMIT_DURATION 300
 
