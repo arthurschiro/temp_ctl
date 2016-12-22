@@ -8,9 +8,8 @@
 #define POT_PORT A1
 #define TEMP_PORT A0
 
-#define AND_PIN 12
+#define ON_PIN 12
 #define OFF_PIN 11
-#define ON_PIN 10
 #define LED_PIN 13
 
 #define AVG_GROWTH .01
@@ -32,12 +31,10 @@ char print_buff[100];
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
-  pinMode(AND_PIN, OUTPUT);
   pinMode(OFF_PIN, OUTPUT);
   pinMode(ON_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   
-  digitalWrite(AND_PIN, LOW);
   digitalWrite(OFF_PIN, LOW);
   digitalWrite(ON_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
@@ -60,7 +57,7 @@ void loop() {
 #define READ_VALUES_PERIOD 10
 #define SAFTEY_TIMER_PERIOD 300000
 #define ACTION_TIMER_PERIOD 10
-#define TRANSMIT_DURATION 500
+#define TRANSMIT_DURATION 300
 
 #define IDLE_STATE  0
 #define ON_ACTIVE   1
@@ -179,7 +176,7 @@ void handle_state_machine(void)
 void refresh_setpoint_and_temp(void)
 {
   unsigned long setpoint_now,temp_now;
-  unsigned int val1,val2,vala,valb,valc;
+  unsigned int offset;
   
   //read setpoint value  
   setpoint_now=((unsigned long)(((double)read_adc_mv(POT_PORT))*CONVERSION_SLOPE))+MIN_T;
@@ -210,12 +207,8 @@ void refresh_setpoint_and_temp(void)
     temp_val = temp_val - ((unsigned long)(((double)(temp_val - temp_now)) * AVG_DECAY));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-    vala=900;
-    valb=800;
-    valc=1000;
-    val1=1000;
-    val2=(temp_val/10)-2*val1;
-    sprintf(print_buff,"%u %u %u ",(unsigned int)(digitalRead(AND_PIN)*vala +val2),(unsigned int)(digitalRead(ON_PIN)*valb +val2),(unsigned int)(digitalRead(OFF_PIN)*valc +val2));
+    offset=(temp_val/10)-400;
+    sprintf(print_buff,"%u %u ",(unsigned int)(digitalRead(ON_PIN)*200 +offset),(unsigned int)(digitalRead(OFF_PIN)*200 +offset));
     Serial.print(print_buff);
     sprintf(print_buff,"%u %u %u ",(unsigned int)(setpoint_now/10),(unsigned int)(temp_setpoint/10),(unsigned int)((temp_setpoint+CONT_HYST)/10));
     Serial.print(print_buff);
@@ -280,27 +273,20 @@ void turn_off(void)
 
 void on_action(void)
 {
-//  pinMode(ON_PIN, OUTPUT);
   digitalWrite(ON_PIN, HIGH);
   digitalWrite(OFF_PIN, LOW);
-  digitalWrite(AND_PIN, HIGH);
 }
 
 void off_action(void)
 {
-//  pinMode(OFF_PIN, OUTPUT);
   digitalWrite(OFF_PIN, HIGH);
   digitalWrite(ON_PIN, LOW);
-  digitalWrite(AND_PIN, HIGH);
 }
 
 void no_action(void)
 {
   digitalWrite(OFF_PIN, LOW);
   digitalWrite(ON_PIN, LOW);
-  digitalWrite(AND_PIN, LOW);
   
-//  pinMode(ON_PIN, INPUT);
-//  pinMode(OFF_PIN, INPUT);
 }
 
