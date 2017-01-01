@@ -188,10 +188,10 @@ void handle_state_machine(void)
 
       sprintf(print_buff,"%u %u %u\r\n",
                 (unsigned int)(temp_val/10),
-                (unsigned int)(temp_setpoint/10),
-                (unsigned int)((temp_setpoint-temp_hyst)/10));
+                (unsigned int)((temp_setpoint/10)+digitalRead(ON_PIN)*100),
+                (unsigned int)((temp_setpoint-temp_hyst)/10)-digitalRead(OFF_PIN)*100);
       Serial.print(print_buff);
-    
+
     switch (state)
     {
       case OFF:
