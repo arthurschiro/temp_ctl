@@ -92,8 +92,8 @@ void handle_serial_ctl(void)
         last_pot_temp_setpoint=pot_temp_setpoint;
         setpoint_ctl_state=SERIAL_CTL;
         
-        sprintf(print_buff, "new setpoint/10 %u \n\r", (unsigned int)(num/10));
-        Serial.print(print_buff);
+//        sprintf(print_buff, "new setpoint/10 %u \n\r", (unsigned int)(num/10));
+//        Serial.print(print_buff);
       }
       else if (strncmp(input_buff, SET_HYST_CMD, strlen(SET_HYST_CMD)) == 0)
       {
@@ -101,8 +101,8 @@ void handle_serial_ctl(void)
         num=str2long(input_buff + strlen(SET_TEMP_CMD));
         temp_hyst=num;
         
-        sprintf(print_buff, "new hist value %u \n\r", (unsigned int)(num/10));
-        Serial.print(print_buff);
+//        sprintf(print_buff, "new hist value %u \n\r", (unsigned int)(num/10));
+//        Serial.print(print_buff);
       }
     }
     else
@@ -140,7 +140,7 @@ long str2long(char * input)
 #define STATE_CHANGE_PERIOD 100
 #define READ_VALUES_PERIOD 10
 #define SAFTEY_TIMER_PERIOD 600000
-#define ACTION_TIMER_PERIOD 10
+#define ACTION_TIMER_PERIOD 100
 #define TRANSMIT_DURATION 300
 
 #define IDLE_STATE  0
