@@ -3,7 +3,10 @@
 */
 
 #include <string.h>
+#include <EEPROM.h>
 
+#define EEPROM_ADR_CAL_KEY 0
+#define EEPROM_ADR_CAL_KEY_SIZE 4
 
 
 #define AREF 5000
@@ -25,24 +28,27 @@
 #define SETPOINT_DECAY .1
 
 #define CONT_HYST 1500
-#define MIN_T 50000
+#define MIN_T 65000
 #define MAX_T 80000
+#define TEMP_BORDER_BUFF 20
 #define CONVERSION_SLOPE ((MAX_T-MIN_T)/AREF)
 
 #define POT_CTL 0
 #define SERIAL_CTL 1
 
-unsigned long temp_hyst=CONT_HYST;
-unsigned long pot_temp_setpoint = 0;
-unsigned long serial_temp_setpoint = 0;
 unsigned long temp_val = 0;
 char print_buff[100];
 #define INPUT_BUFF_LENGTH 100
 char input_buff[INPUT_BUFF_LENGTH];
 char input_buff_ctr = 0;
 
+
+unsigned long temp_hyst=CONT_HYST;
+unsigned long serial_temp_setpoint = 0;
+unsigned long pot_temp_setpoint = 0;
 char setpoint_ctl_state = POT_CTL;
 unsigned long last_pot_temp_setpoint = 0;
+
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -56,6 +62,17 @@ void setup() {
   digitalWrite(ON_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
 
+  //check to see if this micro has been calibrated
+//  if(EEPROM.read(0)!=1 || EEPROM.read(0)!=9 || EEPROM.read(0)!=8 || EEPROM.read(0)~=3)
+//  {
+//    EEPROM.write(0,1);
+//    EEPROM.write(1,9);
+//    EEPROM.write(2,8);
+//    EEPROM.write(3,3);
+//
+//    //set state
+//    
+//  }
 }
 
 // the loop routine runs over and over again forever:
@@ -157,9 +174,8 @@ void handle_state_machine(void)
   static unsigned long transmit_timer = 0;
   static unsigned long saftey_timer = 0;
   static unsigned char action_counter = 0;
-  static unsigned char state = OFF;
   static unsigned char action_state = IDLE_STATE;
-
+  static unsigned char state = OFF;
   unsigned long temp_setpoint,state_print_val;
 
   //
@@ -296,12 +312,7 @@ void refresh_setpoint_and_temp(void)
 
   if(setpoint_ctl_state==SERIAL_CTL)
   {
-    if(pot_temp_setpoint>last_pot_temp_setpoint)
-      diff=pot_temp_setpoint-last_pot_temp_setpoint;
-    else
-      diff=last_pot_temp_setpoint-pot_temp_setpoint;
-    
-    if(diff>1000)
+    if((pot_temp_setpoint>=(MAX_T-TEMP_BORDER_BUFF))||(pot_temp_setpoint<=(MIN_T+TEMP_BORDER_BUFF)))
       setpoint_ctl_state=POT_CTL;
   }
   ///////////////////////////////////////////////////////////////////////////////////////////////
