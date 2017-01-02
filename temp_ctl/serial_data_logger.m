@@ -23,9 +23,13 @@ ax_long=axes('parent',fig,...
         'nextplot','replacechildren',...
         'units','normalized','position',[.1 .55 .85 .2]);
       
-edit_view_dur=uicontrol(fig,'style','edit',...
-                          'callback',@(src,event)edit_view_dur_cb(src,event,fig),...
+edit_view_dur_hr=uicontrol(fig,'style','edit',...
+                          'callback',@(src,event)edit_view_dur_hr_cb(src,event,fig),...
                           'units','normalized','position',[.95 .55 .05 .2]);
+                        
+edit_view_dur_min=uicontrol(fig,'style','edit',...
+                          'callback',@(src,event)edit_view_dur_min_cb(src,event,fig),...
+                          'units','normalized','position',[.95 .3 .05 .2]);
 
 button_quit=uicontrol(fig,'style','pushbutton','string','QUIT',...
                           'callback',@(src,event)button_quit_cb(src,event,fig),...
@@ -79,8 +83,7 @@ handles.disp_dur_long=disp_dur_long;
 handles.disp_long_resample=disp_long_resample;
 handles.buff_len=buff_len;
 handles.buff_dur=buff_dur;
-handles.data_buff=zeros(buff_len,1);
-handles.continue=true;
+handles.data_buff=zeros(buff_len,3);
 handles.data_size_is_calibrated=false;
 handles.data_buff_ptr=1;
 handles.timer_obj=timer_obj;
@@ -95,7 +98,7 @@ end
 function serial_cb(src,event,fig)
   handles=guidata(fig);
   
-  line=str2num(fgetl(handles.s));
+  line=str2num(fgetl(handles.s))/100;
   
   
   if handles.data_size_is_calibrated==false
@@ -112,7 +115,6 @@ function serial_cb(src,event,fig)
   end
   
   guidata(fig,handles);
-  drawnow();
 end
 
 function timer_cb(src,event,fig)
@@ -146,20 +148,20 @@ function timer_cb(src,event,fig)
   
   ax=handles.ax_mid;
   grid(ax,'on');
-  maxval=ceil(max(plot_data_mid(:))/100)*100;
-  minval=floor(min(plot_data_mid(:))/100)*100;
+  maxval=ceil(max(plot_data_mid(:)));
+  minval=floor(min(plot_data_mid(:)));
   plot(ax,plot_data_mid);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
   xlabel(ax,sprintf('%.1f min',handles.disp_dur_mid/60));
   
   ax=handles.ax_long;
   grid(ax,'on');
-  maxval=ceil(max(plot_data_mid(:))/100)*100;
-  minval=floor(min(plot_data_mid(:))/100)*100;
+  maxval=ceil(max(plot_data_mid(:)));
+  minval=floor(min(plot_data_mid(:)));
   plot(ax,plot_data_long);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
   xlabel(ax,sprintf('%.1f hr',handles.disp_dur_long/60/60));
-  title(ax,sprintf('temp %.2f',plot_data_mid(end,1)/100));
+  title(ax,sprintf('temp=%.2f  setpoint=%.2f',plot_data_mid(end,1),plot_data_mid(end,2)));
   
   guidata(fig,handles);
   drawnow();
@@ -171,15 +173,36 @@ end
 
 function button_save_cb(src,event,fig)
   handles=guidata(fig);
-  filename=datestr(now,'yyyy_mm_dd__HH_MM_PM');
-  save(filename,handles);
+  
+  if handles.data_buff_ptr==1
+    newest_ptr=handles.buff_len;
+  else
+    newest_ptr=handles.data_buff_ptr-1;
+  end
+  
+  save_struct=[];
+  save_struct.data=[handles.data_buff(handles.data_buff_ptr:end,:);...
+                    handles.data_buff(1:newest_ptr,:)];
+  save_struct.ts=handles.ts;
+
+  filename=datestr(now,'yyyy_mm_dd__HH_MM_SS_PM');
+  save(filename,'save_struct');
 end
 
-function edit_view_dur_cb(src,event,fig)
+function edit_view_dur_hr_cb(src,event,fig)
   handles=guidata(fig);
   
   dur=min(handles.buff_dur,str2num(get(src,'string'))*60*60);
   handles.disp_dur_long=dur;
+  
+  guidata(fig,handles);
+end
+
+function edit_view_dur_min_cb(src,event,fig)
+  handles=guidata(fig);
+  
+  dur=min(handles.buff_dur,str2num(get(src,'string'))*60);
+  handles.disp_dur_mid=dur;
   
   guidata(fig,handles);
 end
