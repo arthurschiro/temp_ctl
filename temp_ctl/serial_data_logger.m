@@ -22,6 +22,10 @@ ax_long=axes('parent',fig,...
         'xtick',[],...
         'nextplot','replacechildren',...
         'units','normalized','position',[.1 .55 .85 .2]);
+      
+edit_view_dur=uicontrol(fig,'style','edit',...
+                          'callback',@(src,event)edit_view_dur_cb(src,event,fig),...
+                          'units','normalized','position',[.95 .55 .05 .2]);
 
 button_quit=uicontrol(fig,'style','pushbutton','string','QUIT',...
                           'callback',@(src,event)button_quit_cb(src,event,fig),...
@@ -34,6 +38,7 @@ button_save=uicontrol(fig,'style','pushbutton','string','SAVE',...
 edit_temp=uicontrol(fig,'style','edit',...
                           'callback',@(src,event)edit_temp_cb(src,event,fig),...
                           'units','normalized','position',[0 .9 .5 .05]);
+                        
                         
 edit_hyst=uicontrol(fig,'style','edit',...
                           'callback',@(src,event)edit_hyst_cb(src,event,fig),...
@@ -52,11 +57,11 @@ timer_obj=timer('executionmode','fixedrate',...
 
 ts=.1;
 disp_long_resample=10;
-disp_dur_long=60*30;
+disp_dur_long=60*60*2;
 disp_dur_short=5;
 disp_dur_mid=60*5;
 
-buff_dur=60*60;
+buff_dur=60*60*10;
 buff_len=round(buff_dur/ts);
 
 
@@ -73,7 +78,8 @@ handles.disp_dur_mid=disp_dur_mid;
 handles.disp_dur_long=disp_dur_long;
 handles.disp_long_resample=disp_long_resample;
 handles.buff_len=buff_len;
-handles.data_buff=randn(buff_len,1);
+handles.buff_dur=buff_dur;
+handles.data_buff=zeros(buff_len,1);
 handles.continue=true;
 handles.data_size_is_calibrated=false;
 handles.data_buff_ptr=1;
@@ -111,27 +117,32 @@ end
 
 function timer_cb(src,event,fig)
   handles=guidata(fig);
-%   tic
+  
   if handles.data_buff_ptr==1
-    plot_data=handles.data_buff;    
+    newest_ptr=handles.buff_len;
   else
-    plot_data=[handles.data_buff(handles.data_buff_ptr:end,:);...
-               handles.data_buff(1:handles.data_buff_ptr-1,:)];
+    newest_ptr=handles.data_buff_ptr-1;
   end
-%   disp(toc);
+  
+    
+  mid_len=round(handles.disp_dur_mid*handles.fs);
+  idx=newest_ptr-((mid_len-1):-1:0);
+  idx(idx<=0)=idx(idx<=0)+handles.buff_len;
+  plot_data_mid=handles.data_buff(idx,:);
   
   short_len=round(handles.disp_dur_short*handles.fs);
-  plot_data_short=plot_data(end-short_len+1:end,:);
+  plot_data_short=plot_data_mid(end-short_len+1:end,:);
+      
   
-  mid_len=round(handles.disp_dur_mid*handles.fs);
-  plot_data_mid=plot_data(end-mid_len+1:end,:);
-  
-  long_len=round(handles.disp_dur_long*handles.fs);
-  plot_data_long=plot_data(end-long_len+1:handles.disp_long_resample:end,:);
+  long_len=round(handles.disp_dur_long*handles.fs/handles.disp_long_resample);
+  idx=newest_ptr-(((long_len-1):-1:0)*handles.disp_long_resample);
+  idx(idx<=0)=idx(idx<=0)+handles.buff_len;
+  plot_data_long=handles.data_buff(idx,:);
   
   ax=handles.ax_short;
   grid(ax,'on');
   plot(ax,plot_data_short);
+  xlabel(ax,sprintf('%.0f sec',handles.disp_dur_short));
   
   ax=handles.ax_mid;
   grid(ax,'on');
@@ -139,6 +150,7 @@ function timer_cb(src,event,fig)
   minval=floor(min(plot_data_mid(:))/100)*100;
   plot(ax,plot_data_mid);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
+  xlabel(ax,sprintf('%.1f min',handles.disp_dur_mid/60));
   
   ax=handles.ax_long;
   grid(ax,'on');
@@ -146,6 +158,8 @@ function timer_cb(src,event,fig)
   minval=floor(min(plot_data_mid(:))/100)*100;
   plot(ax,plot_data_long);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
+  xlabel(ax,sprintf('%.1f hr',handles.disp_dur_long/60/60));
+  title(ax,sprintf('temp %.2f',plot_data_mid(end,1)/100));
   
   guidata(fig,handles);
   drawnow();
@@ -159,6 +173,15 @@ function button_save_cb(src,event,fig)
   handles=guidata(fig);
   filename=datestr(now,'yyyy_mm_dd__HH_MM_PM');
   save(filename,handles);
+end
+
+function edit_view_dur_cb(src,event,fig)
+  handles=guidata(fig);
+  
+  dur=min(handles.buff_dur,str2num(get(src,'string'))*60*60);
+  handles.disp_dur_long=dur;
+  
+  guidata(fig,handles);
 end
 
 function edit_temp_cb(src,event,fig)

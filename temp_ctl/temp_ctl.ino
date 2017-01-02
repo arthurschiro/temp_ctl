@@ -17,8 +17,9 @@
 #define OFF_PIN 11
 #define LED_PIN 13
 
-#define AVG_GROWTH .01
-#define AVG_DECAY .01
+#define AVG_GROWTH .1
+#define AVG_DECAY .05
+#define MAX_TEMP_VAR 20
 
 #define SETPOINT_GROWTH .1
 #define SETPOINT_DECAY .1
@@ -159,7 +160,7 @@ void handle_state_machine(void)
   static unsigned char state = OFF;
   static unsigned char action_state = IDLE_STATE;
 
-  unsigned long temp_setpoint;
+  unsigned long temp_setpoint,state_print_val;
 
   //
   if (elapsed_time(read_values_timer) > READ_VALUES_PERIOD)
@@ -185,11 +186,16 @@ void handle_state_machine(void)
     else
       temp_setpoint=serial_temp_setpoint;
 
-
-      sprintf(print_buff,"%u %u %u\r\n",
+    if(state==OFF)
+      state_print_val=temp_setpoint-temp_hyst+300;
+    else
+      state_print_val=temp_setpoint-300;
+      
+      sprintf(print_buff,"%u %u %u %u\r\n",
                 (unsigned int)(temp_val/10),
-                (unsigned int)((temp_setpoint/10)+digitalRead(ON_PIN)*100),
-                (unsigned int)((temp_setpoint-temp_hyst)/10)-digitalRead(OFF_PIN)*100);
+                (unsigned int)(temp_setpoint/10),
+                (unsigned int)((temp_setpoint-temp_hyst)/10),
+                (unsigned int)(state_print_val/10));
       Serial.print(print_buff);
 
     switch (state)
@@ -302,16 +308,22 @@ void refresh_setpoint_and_temp(void)
 
   //read temp value
   temp_now = read_temp_F(TEMP_PORT);
-
+//  temp_now=pot_temp_setpoint;
+  
   //if calibration needs to be done
   if (temp_val == 0)
+  {
     temp_val = temp_now;
+//    clear_plot(temp_now);
+  }
 
   //implement exponential averager
   if (temp_now > temp_val)
     temp_val = temp_val + ((unsigned long)(((double)(temp_now - temp_val)) * AVG_GROWTH));
   else
-    temp_val = temp_val - ((unsigned long)(((double)(temp_val - temp_now)) * AVG_DECAY));
+    diff=temp_val - temp_now;
+    diff=(diff>MAX_TEMP_VAR)?MAX_TEMP_VAR:diff;
+    temp_val = temp_val - ((unsigned long)(((double)diff) * AVG_DECAY));
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
