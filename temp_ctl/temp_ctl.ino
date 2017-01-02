@@ -20,7 +20,7 @@
 #define OFF_PIN 11
 #define LED_PIN 13
 
-#define AVG_GROWTH .1
+#define AVG_GROWTH .05
 #define AVG_DECAY .05
 #define MAX_TEMP_VAR 20
 
@@ -203,9 +203,9 @@ void handle_state_machine(void)
       temp_setpoint=serial_temp_setpoint;
 
     if(state==OFF)
-      state_print_val=temp_setpoint-temp_hyst+300;
+      state_print_val=temp_setpoint-temp_hyst+((unsigned long)(((double)temp_hyst)*.3));
     else
-      state_print_val=temp_setpoint-300;
+      state_print_val=temp_setpoint-((unsigned long)(((double)temp_hyst)*.3));
       
       sprintf(print_buff,"%u %u %u %u\r\n",
                 (unsigned int)(temp_val/10),
@@ -330,11 +330,17 @@ void refresh_setpoint_and_temp(void)
 
   //implement exponential averager
   if (temp_now > temp_val)
-    temp_val = temp_val + ((unsigned long)(((double)(temp_now - temp_val)) * AVG_GROWTH));
+  {
+    diff=temp_now-temp_val;
+    diff=(diff>MAX_TEMP_VAR)?MAX_TEMP_VAR:diff;
+    temp_val = temp_val + ((unsigned long)(((double)diff) * AVG_GROWTH));
+  }
   else
+  {
     diff=temp_val - temp_now;
     diff=(diff>MAX_TEMP_VAR)?MAX_TEMP_VAR:diff;
     temp_val = temp_val - ((unsigned long)(((double)diff) * AVG_DECAY));
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
