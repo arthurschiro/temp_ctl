@@ -20,9 +20,25 @@
 #define OFF_PIN 11
 #define LED_PIN 13
 
-#define AVG_GROWTH .05
-#define AVG_DECAY .05
-#define MAX_TEMP_VAR 20
+#define OFF 0
+#define ON 1
+#define NUM_ACTIONS 3
+#define STATE_CHANGE_PERIOD 100
+#define READ_VALUES_PERIOD 10
+#define SAFTEY_TIMER_PERIOD 600000
+#define ACTION_TIMER_PERIOD 100
+#define TRANSMIT_DURATION 300
+
+#define IDLE_STATE  0
+#define ON_ACTIVE   1
+#define NULL_ACTIVE 2
+#define OFF_ACTIVE  3
+
+#define AVG_GROWTH .01
+#define AVG_DECAY .01
+#define DEG_PER_SEC 300
+#define LINEAR_SLOPE_THRESH 300
+#define DEG_PER_STEP (DEG_PER_SEC*READ_VALUES_PERIOD/1000)
 
 #define SETPOINT_GROWTH .1
 #define SETPOINT_DECAY .1
@@ -149,22 +165,6 @@ long str2long(char * input)
   
   return val;
 }
-
-
-
-#define OFF 0
-#define ON 1
-#define NUM_ACTIONS 3
-#define STATE_CHANGE_PERIOD 100
-#define READ_VALUES_PERIOD 10
-#define SAFTEY_TIMER_PERIOD 600000
-#define ACTION_TIMER_PERIOD 100
-#define TRANSMIT_DURATION 300
-
-#define IDLE_STATE  0
-#define ON_ACTIVE   1
-#define NULL_ACTIVE 2
-#define OFF_ACTIVE  3
 
 void handle_state_machine(void)
 {
@@ -328,18 +328,18 @@ void refresh_setpoint_and_temp(void)
 //    clear_plot(temp_now);
   }
 
-  //implement exponential averager
+  //implement linear averager
   if (temp_now > temp_val)
   {
-    diff=temp_now-temp_val;
-    diff=(diff>MAX_TEMP_VAR)?MAX_TEMP_VAR:diff;
-    temp_val = temp_val + ((unsigned long)(((double)diff) * AVG_GROWTH));
+    diff = temp_now-temp_val;
+    diff = diff>LINEAR_SLOPE_THRESH ? (unsigned long)DEG_PER_STEP :(unsigned long)(((double)diff) * AVG_GROWTH);
+    temp_val = temp_val + diff;
   }
   else
   {
     diff=temp_val - temp_now;
-    diff=(diff>MAX_TEMP_VAR)?MAX_TEMP_VAR:diff;
-    temp_val = temp_val - ((unsigned long)(((double)diff) * AVG_DECAY));
+    diff = diff>LINEAR_SLOPE_THRESH ? (unsigned long)DEG_PER_STEP :(unsigned long)(((double)diff) * AVG_DECAY);
+    temp_val = temp_val - diff;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +358,7 @@ void refresh_setpoint_and_temp(void)
 //            (unsigned int)((serial_temp_setpoint-temp_hyst)/10));
 //}
 //      Serial.print(print_buff);
-//  
+  
 //      sprintf(print_buff,"%u %u\r\n",(unsigned int)(temp_now/10),(unsigned int)(temp_val/10));
 //      Serial.print(print_buff);
 
@@ -393,7 +393,8 @@ unsigned long read_adc_mv(char channel)
 
 unsigned long read_temp_C(char channel)
 {
-  return (unsigned long)((((double)analogRead(channel)) * ADC2MV - 750) * 100 + 25000);
+//  return (unsigned long)((((double)analogRead(channel)) * ADC2MV - 750) * 100 + 25000);
+  return (unsigned long)((((double)analogRead(channel)) * ADC2MV - 3010)*9.009 + 23900);
 }
 
 unsigned long read_temp_F(char channel)

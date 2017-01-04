@@ -5,6 +5,9 @@ clc
 delete(instrfind);
 delete(timerfindall());
 
+% port='COM4';
+port='COM16';
+
 fig=figure;
 set(fig,'buttondownfcn',@(src,event)fig_cb(src,event,fig));
 
@@ -49,7 +52,7 @@ edit_hyst=uicontrol(fig,'style','edit',...
                           'units','normalized','position',[.5 .9 .5 .05]);
                      
                         
-s = serial('COM4',...
+s = serial(port,...
            'baudrate',9600,...
            'terminator','CR/LF',...
            'BytesAvailableFcn',@(src,event)serial_cb(src,event,fig));
