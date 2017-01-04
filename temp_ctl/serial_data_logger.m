@@ -6,7 +6,7 @@ delete(instrfind);
 delete(timerfindall());
 
 % port='COM4';
-port='COM16';
+port='COM17';
 
 fig=figure;
 set(fig,'buttondownfcn',@(src,event)fig_cb(src,event,fig));
@@ -15,16 +15,28 @@ ax_short=axes('parent',fig,...
         'xtick',[],...
         'nextplot','replacechildren',...
         'units','normalized','position',[.1 .05 .85 .2]);
-      
+c1=3;
+c2=1;
+c3=2;
+colors=get(gca,'colororder');
+colors([1,2,3],:)=colors([c1,c2,c3],:);
+% set(gca,'colororder',colors);
+
 ax_mid=axes('parent',fig,...
         'xtick',[],...
         'nextplot','replacechildren',...
         'units','normalized','position',[.1 .3 .85 .2]);
+colors=get(gca,'colororder');
+colors([1,2,3],:)=colors([c1,c2,c3],:);
+% set(gca,'colororder',colors);
       
 ax_long=axes('parent',fig,...
         'xtick',[],...
         'nextplot','replacechildren',...
         'units','normalized','position',[.1 .55 .85 .2]);
+colors=get(gca,'colororder');
+colors([1,2,3],:)=colors([c1,c2,c3],:);
+% set(gca,'colororder',colors);
       
 edit_view_dur_hr=uicontrol(fig,'style','edit',...
                           'callback',@(src,event)edit_view_dur_hr_cb(src,event,fig),...
@@ -93,6 +105,7 @@ handles.timer_obj=timer_obj;
          
 guidata(fig,handles);
 fopen(s);
+pause(1);
 start(timer_obj);
 
 
@@ -102,9 +115,11 @@ function serial_cb(src,event,fig)
   handles=guidata(fig);
   
   line=str2num(fgetl(handles.s))/100;
-  
-  
+  line=line(2:end);
+ 
   if handles.data_size_is_calibrated==false
+    disp(line);
+  
     handles.data_buff=repmat(line,handles.buff_len,1);
     handles.data_size_is_calibrated=true;
   else

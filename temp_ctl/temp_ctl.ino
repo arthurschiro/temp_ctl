@@ -22,10 +22,11 @@
 
 #define OFF 0
 #define ON 1
-#define NUM_ACTIONS 3
+#define NUM_ACTIONS 2
 #define STATE_CHANGE_PERIOD 100
 #define READ_VALUES_PERIOD 10
-#define SAFTEY_TIMER_PERIOD 600000
+#define SAFTEY_TIMER_PERIOD_MIN 30
+#define SAFTEY_TIMER_PERIOD (SAFTEY_TIMER_PERIOD_MIN*60000)
 #define ACTION_TIMER_PERIOD 100
 #define TRANSMIT_DURATION 300
 
@@ -36,7 +37,7 @@
 
 #define AVG_GROWTH .01
 #define AVG_DECAY .01
-#define DEG_PER_SEC 300
+#define DEG_PER_SEC 100
 #define LINEAR_SLOPE_THRESH 300
 #define DEG_PER_STEP (DEG_PER_SEC*READ_VALUES_PERIOD/1000)
 
@@ -64,7 +65,7 @@ unsigned long serial_temp_setpoint = 0;
 unsigned long pot_temp_setpoint = 0;
 char setpoint_ctl_state = POT_CTL;
 unsigned long last_pot_temp_setpoint = 0;
-
+unsigned long temp_now=0;
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -207,7 +208,8 @@ void handle_state_machine(void)
     else
       state_print_val=temp_setpoint-((unsigned long)(((double)temp_hyst)*.3));
       
-      sprintf(print_buff,"%u %u %u %u\r\n",
+      sprintf(print_buff,"%u %u %u %u %u\r\n",
+                (unsigned int)(temp_now/10),
                 (unsigned int)(temp_val/10),
                 (unsigned int)(temp_setpoint/10),
                 (unsigned int)((temp_setpoint-temp_hyst)/10),
@@ -294,7 +296,7 @@ void handle_state_machine(void)
 
 void refresh_setpoint_and_temp(void)
 {
-  unsigned long setpoint_now, temp_now,diff;
+  unsigned long setpoint_now,diff;
   unsigned int offset;
 
   //read setpoint value
@@ -358,7 +360,7 @@ void refresh_setpoint_and_temp(void)
 //            (unsigned int)((serial_temp_setpoint-temp_hyst)/10));
 //}
 //      Serial.print(print_buff);
-  
+//  
 //      sprintf(print_buff,"%u %u\r\n",(unsigned int)(temp_now/10),(unsigned int)(temp_val/10));
 //      Serial.print(print_buff);
 
