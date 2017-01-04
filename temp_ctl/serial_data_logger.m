@@ -5,8 +5,8 @@ clc
 delete(instrfind);
 delete(timerfindall());
 
-% port='COM4';
-port='COM17';
+port='COM4';
+% port='COM17';
 
 fig=figure;
 set(fig,'buttondownfcn',@(src,event)fig_cb(src,event,fig));
@@ -65,7 +65,7 @@ edit_hyst=uicontrol(fig,'style','edit',...
                      
                         
 s = serial(port,...
-           'baudrate',9600,...
+           'baudrate',57600,...
            'terminator','CR/LF',...
            'BytesAvailableFcn',@(src,event)serial_cb(src,event,fig));
   
@@ -166,18 +166,19 @@ function timer_cb(src,event,fig)
   
   ax=handles.ax_mid;
   grid(ax,'on');
-  maxval=ceil(max(plot_data_mid(:)));
-  minval=floor(min(plot_data_mid(:)));
+  maxval=max(plot_data_mid(end,2),ceil(max(plot_data_mid(:,1))));
+  minval=min(plot_data_mid(end,3),floor(min(plot_data_mid(:,1))));
   plot(ax,plot_data_mid);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
   xlabel(ax,sprintf('%.1f min',handles.disp_dur_mid/60));
   
   ax=handles.ax_long;
   grid(ax,'on');
-  maxval=ceil(max(plot_data_mid(:)));
-  minval=floor(min(plot_data_mid(:)));
+  maxval=max(plot_data_long(end,2),ceil(max(plot_data_mid(:,1))));
+  minval=min(plot_data_long(end,3),floor(min(plot_data_mid(:,1))));
   plot(ax,plot_data_long);
   set(ax,'ylim',[minval,max(minval+1,maxval)]);
+  set(ax,'xlim',[1,length(plot_data_long)]);
   xlabel(ax,sprintf('%.1f hr',handles.disp_dur_long/60/60));
   title(ax,sprintf('temp=%.2f  setpoint=%.2f',plot_data_mid(end,1),plot_data_mid(end,2)));
   

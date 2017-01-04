@@ -25,7 +25,7 @@
 #define NUM_ACTIONS 2
 #define STATE_CHANGE_PERIOD 100
 #define READ_VALUES_PERIOD 10
-#define SAFTEY_TIMER_PERIOD_MIN 30
+#define SAFTEY_TIMER_PERIOD_MIN 60
 #define SAFTEY_TIMER_PERIOD (SAFTEY_TIMER_PERIOD_MIN*60000)
 #define ACTION_TIMER_PERIOD 100
 #define TRANSMIT_DURATION 300
@@ -35,9 +35,9 @@
 #define NULL_ACTIVE 2
 #define OFF_ACTIVE  3
 
-#define AVG_GROWTH .01
+#define AVG_GROWTH .05
 #define AVG_DECAY .01
-#define DEG_PER_SEC 100
+#define DEG_PER_SEC 50
 #define LINEAR_SLOPE_THRESH 300
 #define DEG_PER_STEP (DEG_PER_SEC*READ_VALUES_PERIOD/1000)
 
@@ -70,7 +70,7 @@ unsigned long temp_now=0;
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+  Serial.begin(57600);
   pinMode(OFF_PIN, OUTPUT);
   pinMode(ON_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
@@ -334,7 +334,8 @@ void refresh_setpoint_and_temp(void)
   if (temp_now > temp_val)
   {
     diff = temp_now-temp_val;
-    diff = diff>LINEAR_SLOPE_THRESH ? (unsigned long)DEG_PER_STEP :(unsigned long)(((double)diff) * AVG_GROWTH);
+//    diff = diff>LINEAR_SLOPE_THRESH ? (unsigned long)DEG_PER_STEP :(unsigned long)(((double)diff) * AVG_GROWTH);
+    diff = (unsigned long)(((double)diff) * AVG_GROWTH);
     temp_val = temp_val + diff;
   }
   else
