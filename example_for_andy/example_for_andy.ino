@@ -38,8 +38,6 @@ void loop() {
   //delay_val= (unsigned int)(((unsigned long)sensorValue)*MAX_VAL/1023);
   delay_val= (unsigned int)(    (pow((unsigned long)sensorValue,2)*MAX_VAL)/SQRD_1023);
   
-  sprintf(print_buff, "%u    %u\n\r",sensorValue, delay_val);
-  Serial.print(print_buff);
   // print out the value you read:
 
   if(digitalRead(MOTION_PIN)==HIGH)
@@ -55,6 +53,9 @@ void loop() {
   {
     digitalWrite(PLAY_PIN, LOW);
     digitalWrite(LED_PIN, LOW); 
+    
+    sprintf(print_buff, "%u    %u\n\r",sensorValue, delay_val);
+    Serial.print(print_buff);
   }
   
 }
