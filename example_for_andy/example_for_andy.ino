@@ -29,14 +29,18 @@ unsigned int scale=(MAX_VAL*FP_SCALE)/SQRD_1023;
 
 #define PRINT_BUFF_LENGTH 100
 char print_buff[PRINT_BUFF_LENGTH];
+int tau=10; 
+int sensorVal_avg=0;
 
 // the loop routine runs over and over again forever:
 void loop() {
   // read the input on analog pin 0:
-  unsigned int sensorValue = analogRead(A0);
+  int sensorValue = analogRead(A0);
+
+  sensorVal_avg=sensorVal_avg +  (sensorValue-sensorVal_avg)/tau;
 
   //delay_val= (unsigned int)(((unsigned long)sensorValue)*MAX_VAL/1023);
-  delay_val= (unsigned int)(    (pow((unsigned long)sensorValue,2)*MAX_VAL)/SQRD_1023);
+  delay_val= (unsigned int)(    (pow((unsigned long)sensorVal_avg,2)*MAX_VAL)/SQRD_1023);
   
   // print out the value you read:
 
@@ -54,7 +58,7 @@ void loop() {
     digitalWrite(PLAY_PIN, LOW);
     digitalWrite(LED_PIN, LOW); 
     
-    sprintf(print_buff, "%u    %u\n\r",sensorValue, delay_val);
+    sprintf(print_buff, "%u    %d    %u\n\r",sensorValue, sensorVal_avg, delay_val);
     Serial.print(print_buff);
   }
   
